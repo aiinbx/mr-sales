@@ -17,6 +17,7 @@ Useful for reply-on-inbound and follow-ups: on every new message in a thread, Mr
 - Firecrawl search + website scrape to find credible personalization triggers
 - Thread-aware, multi‑turn replies (uses the full email conversation, not just the first message)
 - Prompted LLM reply → HTML body only → send via AI Inbx on the existing thread
+ - Optional forwarding rules: Mr Sales can hand off threads to teammates while still replying to the sender
 
 ---
 
@@ -101,14 +102,27 @@ Edit `src/lib/config.ts` to set your company info and the agent’s name and ema
 ```ts
 export const mrSalesConfig = {
   infoAboutOurCompany: "<what you do>",
-  mrSalesEmail: "agent@yourdomain.com",
-  mrSalesName: "Agent Name",
+  mrSalesEmail: "mr-sales@yourdomain.com",
+  mrSalesName: "Mr. Sales",
+  forwardEmails: [
+    // {
+    //   email: "actual.sales.guy@yourdomain.com",
+    //   name: "Actual Sales Guy",
+    //   forwardPrompt:
+    //     "Forward to Actual Sales Guy if the customer is rdy to book a call. Dont confirm any times or dates, just forward to Actual Sales Guy he will take over from there.",
+    // },
+  ],
 };
 ```
 
-This `mrSalesConfig` object now lives in `src/lib/config.ts` and controls the agent identity and basic behavior.
+This `mrSalesConfig` object now lives in `src/lib/config.ts` and controls the agent identity, basic behavior, and optional forwarding rules.
 
 Mr Sales will only reply when the inbound email was sent to `mrSalesEmail`.
+
+Optional forwarding rules:
+- Define one or more entries in `forwardEmails` with `email`, optional `name`, and a natural-language `forwardPrompt` describing when to hand off.
+- When a rule applies, the model calls an internal forward tool to send the thread to the specified address and still produces a short reply to the sender.
+- If forwarded, the reply acknowledges the handoff (e.g., "I forwarded this to NAME — they will take over from here.") and avoids asking new questions; the teammate handles from there.
 
 ---
 
@@ -130,8 +144,8 @@ The webhook route listens on: `/api/ai-inbx-webhook`
 ### How it works
 
 - `src/app/api/ai-inbx-webhook/route.ts`: Next.js webhook handler using `createNextRouteHandler`. Uses `mrSalesConfig` from `src/lib/config.ts` (agent name, email, and company info). On `inbound.email.received`, it calls `mrSales` and replies on the same thread via `aiInbx.emails.reply`.
-- `src/lib/mr-sales.ts`: Orchestrates the flow: verify recipient, fetch thread, extract company name, research with Firecrawl, craft prompts, generate HTML reply with the Vercel AI SDK (OpenAI), return `responseHtml`. Passes the full conversation (`threadToLLMString(thread)`) to the model, enabling follow-up answers and multi‑turn context.
-- `src/lib/extract-company-name.ts`: Uses the thread to infer the sender’s company name.
+- `src/lib/mr-sales.ts`: Orchestrates the flow: verify recipient, fetch thread, extract company name, research with Firecrawl, craft prompts, generate HTML reply with the Vercel AI SDK (OpenAI), return `responseHtml`. Passes the full conversation (`threadToLLMString(thread)`) to the model, enabling follow-up answers and multi‑turn context. If `forwardEmails` are configured and a rule matches, it forwards the thread via `aiInbx.threads.forward` and still replies to the sender with a brief handoff message.
+- `src/lib/extract-company-name.ts`: Uses the thread to infer the sender’s company name (considers inbound messages and handles quoted replies).
 - `src/lib/research-company.ts`: Firecrawl search (news + web), optional website scrape, returns concise research context.
 - `src/lib/firecrawl.ts`: Initialized Firecrawl client using `FIRECRAWL_API_KEY`.
 - `src/lib/create-prompt.ts`: Simple prompt composer.
