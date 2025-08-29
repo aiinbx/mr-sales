@@ -15,10 +15,10 @@ export const mrSalesConfig = {
   mrSalesName: "Mr. Sales",
   forwardEmails: [
     // {
-    //   email: "actual.sales.guy@yourdomain.com",
-    //   name: "Actual Sales Guy",
+    //   email: "max.from.engineering@yourdomain.com",
+    //   name: "Max",
     //   forwardPrompt:
-    //     "Forward to Actual Sales Guy if the customer is rdy to book a call. Dont confirm any times or dates, just forward to Actual Sales Guy he will take over from there.",
+    //     "Forward to Max if the customer has deeper technical questions you cant answer.",
     // },
   ],
 };
