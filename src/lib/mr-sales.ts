@@ -43,12 +43,12 @@ export const mrSales = async ({ email }: { email: EmailRetrieveResponse }) => {
 
   const researchContext = interestingTexts.filter(Boolean).join("\n\n---\n\n");
 
-  const thereAreForwardEmails = mrSalesConfig.forwardEmails.length > 0;
+  const thereAreForwardContacts = mrSalesConfig.forwardContacts.length > 0;
 
-  const forwardingRulesText = thereAreForwardEmails
+  const forwardingRulesText = thereAreForwardContacts
     ? [
         "Forwarding rules:",
-        ...mrSalesConfig.forwardEmails.map(
+        ...mrSalesConfig.forwardContacts.map(
           ({ email, name, forwardPrompt }) =>
             `- When: ${forwardPrompt}\n  To: ${
               name ? `${name} <${email}>` : email
@@ -96,7 +96,7 @@ export const mrSales = async ({ email }: { email: EmailRetrieveResponse }) => {
     conversationHistory: threadToLLMString(thread),
     finalRequest:
       "Answer the latest inbound email naturally. Include credible trigger(s) from the research when available, but mention them subtly and in your own words—no lists, no keyword dumps, no dates, and no quoting their site. Focus on why it matters and how we can help. If none are credible, say so briefly and proceed without fabricating. When referring to our company, strictly use only the facts from the 'Here is everything you need to know about us' section; do not assert capabilities, features, pricing, locations, clients, awards, or timelines not present there. If unknown, omit or keep it generic. Return only the BODY HTML (no <html>, <head>, or <body> tags)." +
-      (thereAreForwardEmails
+      (thereAreForwardContacts
         ? " If you decide to use the forwardTool for this message, do not ask the customer any questions in your reply. Keep it short, acknowledge the forward, and state that NAME will take over from here; avoid proposing times or confirming details — the forwarded person will handle them."
         : "") +
       onHookSuffix,
@@ -114,9 +114,9 @@ export const mrSales = async ({ email }: { email: EmailRetrieveResponse }) => {
         .nullable(),
     }),
     execute: async ({ forwardToEmailAddress, note }) => {
-      // If the forwardToEmailAddress is not in the forwardEmails array, return
+      // If the forwardToEmailAddress is not in the forwardContacts array, return
       if (
-        !mrSalesConfig.forwardEmails.some(
+        !mrSalesConfig.forwardContacts.some(
           (forwardEmail) => forwardEmail.email === forwardToEmailAddress
         )
       ) {
@@ -153,7 +153,7 @@ export const mrSales = async ({ email }: { email: EmailRetrieveResponse }) => {
           return interestingTexts.filter(Boolean).join("\n\n---\n\n");
         },
       }),
-      ...(thereAreForwardEmails && { forwardTool }),
+      ...(thereAreForwardContacts && { forwardTool }),
     },
   });
 

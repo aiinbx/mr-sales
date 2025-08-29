@@ -2,18 +2,18 @@ export type MrSalesConfig = {
   infoAboutOurCompany: string;
   mrSalesEmail: string;
   mrSalesName: string;
-  forwardEmails: {
+  forwardContacts: {
     email: string;
     name?: string;
     forwardPrompt: string;
   }[];
 };
 
-export const mrSalesConfig = {
+export const mrSalesConfig: MrSalesConfig = {
   infoAboutOurCompany: "<what you do>",
   mrSalesEmail: "mr-sales@yourdomain.com",
   mrSalesName: "Mr. Sales",
-  forwardEmails: [
+  forwardContacts: [
     // {
     //   email: "max.from.engineering@yourdomain.com",
     //   name: "Max",
